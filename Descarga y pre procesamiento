@@ -1,0 +1,68 @@
+#Comenzamos indicando el directorio de trabajo
+setwd("C:/Mi unidad/Analisis/DEG")
+
+#Librerías utilizadas para el acceso a los datos
+library("TCGAbiolinks")
+library("RTCGA")
+library("RTCGA.clinical")
+llibrary("SummarizedExperiment")
+
+#Si aún no las habías descargado se puede hacer utilizando la siguiente línea (https://rtcga.github.io/RTCGA)
+if (!require("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
+BiocManager::install("RTCGA")
+
+# Librerías utilizadas para el análisis de DEGs y limpieza de los datos
+library(limma)
+library(edgeR)
+library(tidyverse)
+library(org.Hs.eg.db) # esta librería nos permite acceder a todas las notaciones de genes que podamos llegar a necesitar
+
+# - Acceso a la información clínica
+clinica<-as.data.frame(SKCM.clinical) # acceso, descarga y asignación del objeto 'clinica' que tiene toda la información clínica de las personas incluidas en el proyecto TCGA-SKCM
+clinica$bcr_patient_barcode<-toupper(clinica$patient.bcr_patient_barcode) # modificar de minúscula a mayúscula el ID
+id<-as.data.frame(clinica$bcr_patient_barcode)
+x<-x[,c(1,9,11,13,16,28,30,31,438,439,448,449,450,770,775,778,779,780,785,917,935,939,940,941,944,945,846,949,956,964,1060,1867)] #selección de la información clínica que consideramos útil
+write.table(x,"clinical information.txt") #guardado de la información clínica
+
+#Búsqueda y descarga de los RNAseq (cuentas crudas)
+query.exp <- GDCquery(
+  project = "TCGA-SKCM", # I use the SKCM project, you may use BRCA or breast cancer or for MMRF bone marrow, etc.
+  data.category = "Transcriptome Profiling",
+  data.type = "Gene Expression Quantification",
+  workflow.type = "STAR - Counts") # For raw counts
+
+GDCdownload(
+  query = query.exp,
+  files.per.chunk = 100)
+
+skcm.exp <- GDCprepare(
+  query = query.exp,
+  save = TRUE,
+  save.filename = "skcmExp.rda")
+
+rnaseq <- assay(skcm.exp)
+rnaseq <- rnaseq[which(!duplicated(rownames(rnaseq))),]   
+write.table(rnaseq, "raw counts.txt") # guardamos el dataset
+
+# Manipulación y limpieza
+# - Cambio de ids (recorte)
+id2<-as.data.frame(colnames(rnaseq))
+colnames(id2)<-c("bcr_patient_barcode")
+id2<-id%>%mutate(bcr_patient_barcode = substr(bcr_patient_barcode, 1, 12))
+colnames(rnaseq)<-id2$bcr_patient_barcode
+
+# - Elección de aquellas personas cuya información clínica esté disponible
+rnaseq<-select(rnaseq, by=c(x$id))
+CPM<-rnaseq[,-1] # eliminate the ENSEMBL column and save the CPM for later
+id3<-as.data.frame(colnmaes(rnaseq))
+
+# - Dependiendo del paquete que utilicemos, es posible que necesitemos ENTREZ, GENE SYMBOL o ENSEMBL como codificación de genes
+hs <- org.Hs.eg.db # Hs se refiere a la notación de humanos
+my.symbols <- c(rnaseq$ENSEMBL)
+IDS<-select(hs, 
+            keys = my.symbols,
+            columns = c("ENSEMBL", "SYMBOL","ENTREZID"),
+            keytype = "ENSEMBL")
+IDS<-na.omit(IDS)
+rnaseq<-merge(rnaseq,IDS,by="ENSEMBL")
