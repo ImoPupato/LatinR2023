@@ -1,0 +1,43 @@
+#Análisis de sobrevida
+#Librerías utilizadas
+library(survival)
+library(edgeR)
+library(tidyverse)
+library("TCGAbiolinks")
+library("RTCGA")
+library("RTCGA.clinical")
+llibrary("SummarizedExperiment")
+
+#-Normalización y selección de datos
+VAVs_SKCM.surv<-survivalTCGA(SKCM.clinical) #accedemos a la información de sobrevida y la asignamos al objeto 'VAVs_SKCM.surv'
+colnames(VAVs_SKCM.surv)<-c("times","ID","status") #renombramos las columnas
+CPM<-cpm(CPM) # utilizando la función 'cpm' de edgeR se calculan las 'cuentas por millón' a partir de las 'cuentas crudas' (ver línea 57 del Script correspondiente a "Descarga y pre procesamiento"
+CPM<-cbind(rnaseq$SYMBOL,CPM)
+phenotype<-t(rbind(CPM[CPM$SYMBOL=="VAV1",],CPM[CPM$SYMBOL=="VAV2",],CPM[CPM$SYMBOL=="VAV3",]))
+phenotype<-cbind(id3,phenotype)
+colnames(phenotype)<-c("ID","VAV1","VAV2,"VAV3)
+VAVs_SKCM.surv_rnaseq<- VAVs_SKCM.surv %>% left_join(CPM,by = "ID")
+VAVs_SKCM.surv_rnaseq.cut<-surv_cutpoint(
+  VAVs_SKCM.surv_rnaseq,
+  time = "times",
+  event = "status",
+  variables = c("VAV1","VAV2", "VAV3")
+)
+summary(VAVs_SKCM.surv_rnaseq.cut) # valores de corte para cada Vav
+
+
+fit <- survfit(Surv(times, status) ~ Vav*,
+               data = VAVs_SKCM.surv_rnaseq.cat)
+ggsurvplot(
+   fit,                     
+   risk.table = TRUE,       
+   pval = TRUE,             
+   conf.int = FALSE,                  
+   xlim = c(0,5500),      
+   break.time.by = 1000,    
+   ggtheme = theme_bw(), 
+   risk.table.y.text.col = T, 
+  font.legend=8, 
+  legend.title = "Expression",
+  risk.table.y.text = FALSE,                          
+)
