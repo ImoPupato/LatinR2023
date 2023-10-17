@@ -1,0 +1,18 @@
+#Librerías utilizadas
+library(ggVennDiagram)
+library(RColorBrewer)
+
+#Carga de datos
+VAV2<-read.csv("~/Descargas/Exact test VAV2.txt", sep="") # una vez descargada la salida del Exact test de edgeR, los abrimos en el entorno para realizar las listas que serán unsada para los diagramas de venn
+VAV3<-read.csv("~/Descargas/Exact test VAV3txt", sep="")
+
+#Armado de cadenas de caracteres y ista según expresión y Vav
+vav2<-c(subset(VAV2$Gene,VAV2$Expression!="Stable")) # '!=' es utilizado para indicar que todo los diferente a "Stable", es decir, "Up" y "Down"
+vav3<-c(subset(VAV3$Gene,VAV3$Expression!="Stable"))
+list<-list(vav2,vav3)
+
+#Generación del gráfico
+ggVennDiagram(list, label_alpha = 0,
+              category.names = c("VAV2","VAV3"),
+              edge_lty = "blank") +  
+  scale_fill_distiller(palette = "Pastel2")
