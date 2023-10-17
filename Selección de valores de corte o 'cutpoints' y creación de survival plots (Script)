@@ -25,7 +25,7 @@ VAVs_SKCM.surv_rnaseq.cut<-surv_cutpoint(
 )
 summary(VAVs_SKCM.surv_rnaseq.cut) # valores de corte para cada Vav
 
-
+# Curva de sobrevida
 fit <- survfit(Surv(times, status) ~ Vav*,
                data = VAVs_SKCM.surv_rnaseq.cat)
 ggsurvplot(
@@ -41,3 +41,8 @@ ggsurvplot(
   legend.title = "Expression",
   risk.table.y.text = FALSE,                          
 )
+
+# Categorizar a las pesonas según la expresión de Vav1, 2 y 3, utilizando los valores de corte antes obtenidos
+phenotype$PhenoV1<-ifelse(phenotype$VAV1<7.717641,"Low","High")
+phenotype$PhenoV2<-ifelse(phenotype$VAV2<57.475259,"Low","High")
+phenotype$PhenoV3<-ifelse(phenotype$VAV3<9.791567,"Low","High")
