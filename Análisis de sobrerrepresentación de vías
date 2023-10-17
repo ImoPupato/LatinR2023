@@ -1,0 +1,14 @@
+# Librerías necesarias para realizar el ORA
+library(ReactomePA)
+library(enrichplot)
+
+# Selección de genes
+hs <- org.Hs.eg.db
+Exact_test_Vav*<-subset(df_et,df_et$Expression!="Stable") #utilizaré los genes con expresión alta y baja
+my.symbols <- c(Exact_test_Vav*$Genes) 
+IDS<-AnnotationDbi::select(org.Hs.eg.db, keys=my.symbols, columns=c("SYMBOL", "ENTREZID"), keytype="SYMBOL")
+names_ids<-IDS$ENTREZID
+b<-na.omit(IDS) #wliminar en caso de que haya NA's
+                     
+x <- enrichPathway(gene=names_ids,pvalueCutoff=0.05, readable=T)
+dotplot(x, showCategory=10, title="DotPlot Vav*",font.size=8) # Se pueden hacer otros gráficos como CNet Plot y Bar Plot
