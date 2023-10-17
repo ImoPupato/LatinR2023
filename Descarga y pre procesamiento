@@ -52,9 +52,9 @@ colnames(id2)<-c("bcr_patient_barcode")
 id2<-id%>%mutate(bcr_patient_barcode = substr(bcr_patient_barcode, 1, 12))
 colnames(rnaseq)<-id2$bcr_patient_barcode
 
-# - Elección de aquellas personas cuya información clínica esté disponible
+# - Elección de aquellas personas cuya información clínica esté disponible y creación de CPM, que será utilizada más adelante
 rnaseq<-select(rnaseq, by=c(x$id))
-CPM<-rnaseq[,-1] # eliminate the ENSEMBL column and save the CPM for later
+CPM<-rnaseq[,-1] # eliminar la columna que la codificación 'ENSEMBL' y guardar CPM para despues
 id3<-as.data.frame(colnmaes(rnaseq))
 
 # - Dependiendo del paquete que utilicemos, es posible que necesitemos ENTREZ, GENE SYMBOL o ENSEMBL como codificación de genes
