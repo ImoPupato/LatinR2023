@@ -6,7 +6,8 @@ library(tidyverse)
 library("TCGAbiolinks")
 library("RTCGA")
 library("RTCGA.clinical")
-llibrary("SummarizedExperiment")
+library("SummarizedExperiment")
+library("survminer")
 
 #-Normalización y selección de datos
 VAVs_SKCM.surv<-survivalTCGA(SKCM.clinical) #accedemos a la información de sobrevida y la asignamos al objeto 'VAVs_SKCM.surv'
@@ -24,6 +25,7 @@ VAVs_SKCM.surv_rnaseq.cut<-surv_cutpoint(
   variables = c("VAV1","VAV2", "VAV3")
 )
 summary(VAVs_SKCM.surv_rnaseq.cut) # valores de corte para cada Vav
+VAVs_SKCM.surv_rnaseq.cat <- surv_categorize(VAVs_SKCM.surv_rnaseq.cut)
 
 # Curva de sobrevida
 fit <- survfit(Surv(times, status) ~ Vav*,
